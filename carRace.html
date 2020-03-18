@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 2</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <script type="text/javascript">
+      var config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: {
+          default: "arcade",
+          arcade: {
+            debug: false
+          }
+        },
+        scene: {
+          preload: preload,
+          create: create,
+          update: update
+        }
+      };
+      var car;
+      var platforms;
+      var stars;
+      var bomb;
+      var cursors;
+      var score = 0;
+      var gameOver = false;
+      var scoreText;
+      var collectStar;
+      var sound;
+      var start;
+
+      var game = new Phaser.Game(config);
+
+      function preload() {
+        this.load.audio("Sound", "assets/sound.mp3");
+        this.load.image("soil", "assets/soil.png");
+        this.load.image("blocks", "assets/platforms.png");
+        this.load.image("blocksV", "assets/platforms copy.png");
+        this.load.image("car", "assets/car.png");
+        this.load.image("stars", "assets/star.png");
+        this.load.image("bomb", "assets/bomb.png");
+        this.load.image("start", "assets/start.png");
+        this.load.image("end", "assets/end.png");
+      }
+
+      function create() {
+        this.add.image(400, 300, "soil");
+        let sound = this.sound.add("Sound");
+        sound.stop();
+        sound.play();
+
+        Start = this.add.image(30, 585, "start");
+
+        platforms = this.physics.add.staticGroup();
+        platforms
+          .create(200, 500, "blocksV")
+          .setScale(1, 1.6)
+          .refreshBody();
+        platforms
+          .create(130, 250, "blocks")
+          .setScale(0.4, 1)
+          .refreshBody();
+        platforms
+          .create(130, 500, "blocks")
+          .setScale(0.4, 1)
+          .refreshBody();
+        platforms
+          .create(40, 380, "blocks")
+          .setScale(0.3, 1)
+          .refreshBody();
+        platforms
+          .create(296, 400, "blocksV")
+          .setScale(1, 0.5)
+          .refreshBody();
+        platforms
+          .create(504, 400, "blocksV")
+          .setScale(1, 0.5)
+          .refreshBody();
+        platforms
+          .create(400, 250, "blocksV")
+          .setScale(1, 0.8)
+          .refreshBody();
+        platforms
+          .create(36, 100, "blocks")
+          .setScale(0.4, 1)
+          .refreshBody();
+        platforms
+          .create(400, 500, "blocks")
+          .setScale(0.6, 1)
+          .refreshBody();
+        platforms
+          .create(730, 500, "blocksV")
+          .setScale(1, 1.5)
+          .refreshBody();
+        platforms
+          .create(660, 300, "blocks")
+          .setScale(0.4, 1)
+          .refreshBody();
+        platforms
+          .create(660, 530, "blocks")
+          .setScale(0.4, 1)
+          .refreshBody();
+        platforms
+          .create(580, 420, "blocks")
+          .setScale(0.4, 1)
+          .refreshBody();
+        platforms
+          .create(700, 120, "blocks")
+          .setScale(0.8, 1)
+          .refreshBody();
+
+        stars = this.physics.add.group();
+        stars.create(110, 440, "stars");
+        stars.create(60, 320, "stars");
+        stars.create(120, 180, "stars");
+        stars.create(250, 400, "stars");
+        stars.create(400, 450, "stars");
+        stars.create(300, 250, "stars");
+        stars.create(450, 560, "stars");
+        stars.create(500, 20, "stars");
+        stars.create(650, 230, "stars");
+        stars.create(560, 350, "stars");
+        stars.create(630, 470, "stars");
+        stars.create(770, 400, "stars");
+        stars.create(700, 50, "stars");
+        stars.create(300, 50, "stars");
+        stars.create(500, 200, "stars");
+
+        car = this.physics.add.sprite(20, 550, "car");
+        car.setCollideWorldBounds(true);
+
+        bomb = this.add.image(5, 5, "bomb");
+        bombs = this.physics.add.group();
+        this.physics.add.collider(bombs, platforms);
+        this.physics.add.collider(car, bombs, hitBomb, null, this);
+
+        this.physics.add.collider(car, platforms);
+        this.physics.add.collider(stars, platforms);
+
+        this.physics.add.overlap(car, stars, collectStar, null, this);
+
+        this.anims.create({
+          key: "up",
+          frames: [
+            {
+              key: "car",
+              frame: 1
+            }
+          ]
+        });
+
+        this.anims.create({
+          key: "turn",
+          frames: [
+            {
+              key: "car",
+              frame: 1
+            }
+          ]
+        });
+
+        this.anims.create({
+          key: "down",
+          frames: [
+            {
+              key: "car",
+              frame: 1
+            }
+          ]
+        });
+        this.anims.create({
+          key: "right",
+          frames: [
+            {
+              key: "car",
+              frame: 1
+            }
+          ]
+        });
+        this.anims.create({
+          key: "left",
+          frames: [
+            {
+              key: "car",
+              frame: 1
+            }
+          ]
+        });
+
+        cursors = this.input.keyboard.createCursorKeys();
+
+        scoreText = this.add.text(4, 2, "score: 0", {
+          fontSize: "32px",
+          fill: "#000"
+        });
+
+        end = this.add.image(30, 60, "end");
+      }
+
+      function update() {
+        if (gameOver) {
+          return;
+        }
+        if (cursors.up.isDown) {
+          car.setVelocityY(-160);
+
+          car.anims.play("up", true);
+        } else if (cursors.down.isDown) {
+          car.setVelocityY(160);
+
+          car.anims.play("down", true);
+        } else if (cursors.right.isDown) {
+          car.setVelocityX(160);
+
+          car.anims.play("right", true);
+        } else if (cursors.left.isDown) {
+          car.setVelocityX(-160);
+
+          car.anims.play("left", true);
+        } else {
+          car.setVelocityX(0);
+          car.setVelocityY(0);
+
+          car.anims.play("turn");
+        }
+
+        // if (cursors.up.isDown && car.body.touching.down) {
+        //     car.setVelocityY(-330);
+        // }
+      }
+
+      function collectStar(car, stars) {
+        stars.disableBody(true, true);
+        score += 10;
+        scoreText.setText("Score: " + score);
+
+        var x =
+          car.x < 400
+            ? Phaser.Math.Between(400, 800)
+            : Phaser.Math.Between(0, 400);
+
+        var bomb = bombs.create(5, 5, "bomb");
+        bomb.setBounce(1);
+        bomb.setCollideWorldBounds(true);
+        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        bomb.allowGravity = false;
+      }
+
+      function hitBomb(car, bomb) {
+        this.physics.pause();
+
+        car.setTint(0xff0000);
+
+        car.anims.play("turn");
+
+        gameOver = true;
+      }
+    </script>
+  </body>
+</html>
